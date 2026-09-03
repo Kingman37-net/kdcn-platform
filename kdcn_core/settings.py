@@ -100,7 +100,12 @@ LOGIN_URL = '/admin/login/'
 
 # Production settings
 import os
+
+# Security
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'your-secret-key-here')
 DEBUG = False
-ALLOWED_HOSTS = ['.pythonanywhere.com', 'yourdomain.com', 'localhost']
+ALLOWED_HOSTS = ['yourusername.pythonanywhere.com', 'www.yourusername.pythonanywhere.com']
+
+# Static files
+STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_DIRS = [BASE_DIR / 'static']
