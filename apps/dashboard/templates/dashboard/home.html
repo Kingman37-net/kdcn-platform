@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KDCN Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background: #f0f2f5;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+        .sidebar {
+            background: #0a0f14;
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+            position: fixed;
+            width: 260px;
+            transition: all 0.3s;
+        }
+        .sidebar .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #00d1ff;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .sidebar .logo span {
+            display: block;
+            font-size: 0.9rem;
+            color: #b9c6cf;
+            font-weight: 300;
+        }
+        .sidebar a {
+            color: #b9c6cf;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            border-radius: 8px;
+            transition: 0.3s;
+            margin-bottom: 5px;
+        }
+        .sidebar a i {
+            margin-right: 12px;
+            font-size: 1.2rem;
+            width: 24px;
+        }
+        .sidebar a:hover, .sidebar a.active {
+            background: rgba(0, 209, 255, 0.1);
+            color: #00d1ff;
+        }
+        .main-content {
+            margin-left: 260px;
+            padding: 30px;
+        }
+        .stats-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            transition: 0.3s;
+        }
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        .stats-card .icon {
+            font-size: 2.5rem;
+            color: #00d1ff;
+            opacity: 0.3;
+        }
+        .stats-card .number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #0a0f14;
+        }
+        .stats-card .label {
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+        .table-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-top: 30px;
+        }
+        .table-card h5 {
+            color: #0a0f14;
+        }
+        .badge-open {
+            background: #ffc107;
+        }
+        .badge-active {
+            background: #28a745;
+        }
+        .badge-completed {
+            background: #17a2b8;
+        }
+        .badge-cancelled {
+            background: #dc3545;
+        }
+        .notification-badge {
+            position: relative;
+        }
+        .notification-badge .badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #dc3545;
+            color: #fff;
+            border-radius: 50%;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                position: relative;
+                min-height: auto;
+                padding: 10px;
+            }
+            .main-content {
+                margin-left: 0;
+            }
+            .stats-card .number {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="logo">
+            KDCN
+            <span>Digital Cyber Network</span>
+        </div>
+        <a href="#" class="active"><i class="bi bi-grid"></i> Dashboard</a>
+        <a href="/admin/clients/client/"><i class="bi bi-people"></i> Clients</a>
+        <a href="/admin/projects/project/"><i class="bi bi-folder"></i> Projects</a>
+        <a href="/admin/services/service/"><i class="bi bi-gear"></i> Services</a>
+        <a href="/admin/support/ticket/"><i class="bi bi-ticket"></i> Support</a>
+        <a href="/admin/documents/document/"><i class="bi bi-file-earmark-text"></i> Documents</a>
+        <a href="/admin/billing/invoice/"><i class="bi bi-receipt"></i> Billing</a>
+        <a href="/admin/notifications/notification/"><i class="bi bi-bell notification-badge">
+            <span class="badge">{{ unread_notifications }}</span>
+        </i> Notifications</a>
+        <a href="/admin/logout/"><i class="bi bi-box-arrow-right"></i> Logout</a>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3">Dashboard</h1>
+            <div>
+                <span class="text-muted me-3"><i class="bi bi-person-circle"></i> {{ user.username }}</span>
+                <span class="badge bg-primary">Admin</span>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="row g-4">
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="number">{{ client_count }}</div>
+                            <div class="label">Clients</div>
+                        </div>
+                        <div class="icon"><i class="bi bi-people"></i></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="number">{{ project_count }}</div>
+                            <div class="label">Projects</div>
+                        </div>
+                        <div class="icon"><i class="bi bi-folder"></i></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="number">{{ service_count }}</div>
+                            <div class="label">Services</div>
+                        </div>
+                        <div class="icon"><i class="bi bi-gear"></i></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="number">{{ ticket_count }}</div>
+                            <div class="label">Open Tickets</div>
+                        </div>
+                        <div class="icon"><i class="bi bi-ticket"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="table-card">
+                    <h5><i class="bi bi-clock-history"></i> Recent Clients</h5>
+                    <ul class="list-unstyled">
+                        {% for client in recent_clients %}
+                        <li class="border-bottom py-2">{{ client.company_name }} <span class="text-muted small">{{ client.created_at|date:"M d" }}</span></li>
+                        {% empty %}
+                        <li class="text-muted">No clients yet.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="table-card">
+                    <h5><i class="bi bi-list-task"></i> Recent Projects</h5>
+                    <ul class="list-unstyled">
+                        {% for project in recent_projects %}
+                        <li class="border-bottom py-2">{{ project.name }} 
+                            <span class="badge {% if project.status == 'active' %}badge-active{% elif project.status == 'completed' %}badge-completed{% elif project.status == 'cancelled' %}badge-cancelled{% else %}badge-open{% endif %}">{{ project.get_status_display }}</span>
+                        </li>
+                        {% empty %}
+                        <li class="text-muted">No projects yet.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notifications & Tickets -->
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="table-card">
+                    <h5><i class="bi bi-bell"></i> Notifications</h5>
+                    <ul class="list-unstyled">
+                        {% for notif in recent_notifications %}
+                        <li class="border-bottom py-2">{{ notif.title }} <span class="text-muted small">{{ notif.created_at|timesince }} ago</span></li>
+                        {% empty %}
+                        <li class="text-muted">No new notifications.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="table-card">
+                    <h5><i class="bi bi-ticket"></i> Recent Tickets</h5>
+                    <ul class="list-unstyled">
+                        {% for ticket in recent_tickets %}
+                        <li class="border-bottom py-2">{{ ticket.subject }} - {{ ticket.client.company_name }} <span class="badge badge-{{ ticket.status }}">{{ ticket.get_status_display }}</span></li>
+                        {% empty %}
+                        <li class="text-muted">No tickets yet.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="table-card text-center">
+                    <h5>Quick Actions</h5>
+                    <div class="d-flex gap-3 justify-content-center flex-wrap">
+                        <a href="/admin/clients/client/add/" class="btn btn-primary" target="_blank"><i class="bi bi-plus-circle"></i> Add Client</a>
+                        <a href="/admin/projects/project/add/" class="btn btn-success" target="_blank"><i class="bi bi-plus-circle"></i> New Project</a>
+                        <a href="/admin/support/ticket/add/" class="btn btn-warning" target="_blank"><i class="bi bi-envelope"></i> Support Ticket</a>
+                        <a href="/admin/billing/invoice/add/" class="btn btn-info" target="_blank"><i class="bi bi-receipt"></i> Create Invoice</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
