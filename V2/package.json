@@ -1,0 +1,13 @@
+{
+  "name": "kdcn-platform-v2",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "KDCN Platform V2 — Node stdlib API (Cloudflare Workers ready)",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node --no-warnings api/app/main.js"
+  }
+}
