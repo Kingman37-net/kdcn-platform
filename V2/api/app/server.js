@@ -1,5 +1,5 @@
 // KDCN Platform V2 — minimal HTTP server (stdlib)
-// Includes JSON body parsing for POST/PATCH/PUT.
+// Includes JSON body parsing for POST/PATCH/PUT and CORS for dashboard.
 
 import http from 'node:http';
 import crypto from 'node:crypto';
@@ -29,6 +29,19 @@ function match(method, pathname) {
     return { handler: r.handler, params };
   }
   return null;
+}
+
+// ---------- CORS ----------
+
+function setCorsHeaders(res, origin) {
+  if (origin && config.corsOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Request-Id');
+    res.setHeader('Access-Control-Expose-Headers', 'X-Request-Id');
+    res.setHeader('Vary', 'Origin');
+  }
 }
 
 // ---------- Body parsing ----------
@@ -89,6 +102,18 @@ function sendJson(res, status, body, requestId) {
 export function startServer() {
   const server = http.createServer(async (req, res) => {
     const requestId = req.headers['x-request-id'] || `req_${crypto.randomBytes(12).toString('hex')}`;
+    const origin = req.headers['origin'] || '';
+
+    // ---------- CORS ----------
+    setCorsHeaders(res, origin);
+
+    // ---------- Preflight ----------
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204, { 'X-Request-Id': requestId });
+      res.end();
+      return;
+    }
+
     const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
     const m = match(req.method, url.pathname);
 

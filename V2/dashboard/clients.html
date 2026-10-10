@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Clients | KDCN Platform</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="https://media.kingmandigital.co.ke/favicon/favicon.ico" type="image/png" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+  <style>
+    .layout { display: grid; grid-template-columns: 220px 1fr; gap: 24px; max-width: 1200px; margin: 0 auto; padding: 30px 20px; }
+    .sidebar { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 18px; height: fit-content; position: sticky; top: 80px; }
+    .sidebar .user-info { text-align: center; padding-bottom: 14px; border-bottom: 1px solid var(--card-border); margin-bottom: 14px; }
+    .sidebar .user-info .avatar { font-size: 2.5rem; display: block; }
+    .sidebar .user-info .name { color: var(--text-primary); font-weight: 700; }
+    .sidebar .user-info .email { color: var(--text-muted); font-size: 0.8rem; word-break: break-all; }
+    .sidebar nav a { display: block; padding: 10px 12px; border-radius: 8px; color: var(--text-primary); font-size: 0.9rem; margin-bottom: 2px; }
+    .sidebar nav a:hover, .sidebar nav a.active { background: var(--accent); color: #0a0f14; font-weight: 700; }
+    .form-inline { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; align-items: end; }
+    @media (max-width: 768px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { position: static; }
+      .form-inline { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-container">
+    <div class="logo">
+      <img src="https://media.kingmandigital.co.ke/website/store/logo/kdcn-web-logo-500.webp" alt="KDCN" />
+    </div>
+    <ul class="nav-menu">
+      <li><a href="index.html">Dashboard</a></li>
+      <li><a href="clients.html" class="active">Clients</a></li>
+      <li><a href="projects.html">Projects</a></li>
+      <li><a href="services.html">Services</a></li>
+    </ul>
+    <button id="logoutBtn" class="btn btn-secondary" style="padding:6px 14px;font-size:0.85rem;">Logout</button>
+  </div>
+</nav>
+
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="user-info">
+      <span class="avatar">👤</span>
+      <div class="name" id="sideName">—</div>
+      <div class="email" id="sideEmail">—</div>
+    </div>
+    <nav>
+      <a href="index.html">📊 Dashboard</a>
+      <a href="clients.html" class="active">🏢 Clients</a>
+      <a href="projects.html">📁 Projects</a>
+      <a href="services.html">⚙️ Services</a>
+    </nav>
+  </aside>
+
+  <main>
+    <h1 style="margin-bottom:20px;color:var(--accent);">Clients</h1>
+
+    <div class="card">
+      <h3>Add Client</h3>
+      <form id="createForm" class="form-inline">
+        <div class="form-group">
+          <label>Company Name *</label>
+          <input type="text" name="company_name" required />
+        </div>
+        <div class="form-group">
+          <label>Phone</label>
+          <input type="text" name="phone" />
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" name="email" />
+        </div>
+        <div class="form-group" style="grid-column: 1 / -1;">
+          <label>Address</label>
+          <input type="text" name="address" />
+        </div>
+        <div style="grid-column: 1 / -1;">
+          <button type="submit" class="btn btn-primary" id="createBtn">Create Client</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <h3>All Clients</h3>
+      <div id="list">Loading...</div>
+    </div>
+  </main>
+
+</div>
+
+<script src="assets/js/api.js"></script>
+<script>
+(function () {
+  if (!Session.has()) { window.location.href = 'login.html'; return; }
+
+  const user = Session.user || {};
+  document.getElementById('sideName').textContent = user.display_name || '—';
+  document.getElementById('sideEmail').textContent = user.email || '—';
+
+  document.getElementById('logoutBtn').addEventListener('click', async function () {
+    try { await apiFetch('/auth/logout', { method: 'POST', body: { refresh_token: Session.refreshToken } }); } catch (e) {}
+    Session.clear();
+    window.location.href = 'login.html';
+  });
+
+  const list = document.getElementById('list');
+
+  async function load() {
+    list.innerHTML = '<p style="color:var(--text-muted);">Loading...</p>';
+    try {
+      const res = await apiFetch('/clients?per_page=100');
+      if (!res.data.length) {
+        list.innerHTML = '<p style="color:var(--text-muted);">No clients yet.</p>';
+        return;
+      }
+      let html = '<table><tr><th>Company</th><th>Phone</th><th>Email</th><th>Created</th></tr>';
+      for (const c of res.data) {
+        html += '<tr>' +
+          '<td><strong>' + escapeHtml(c.company_name) + '</strong></td>' +
+          '<td>' + escapeHtml(c.phone || '—') + '</td>' +
+          '<td>' + escapeHtml(c.email || '—') + '</td>' +
+          '<td>' + formatDate(c.created_at) + '</td>' +
+        '</tr>';
+      }
+      html += '</table>';
+      list.innerHTML = html;
+    } catch (err) {
+      list.innerHTML = '<p style="color:var(--danger);">Failed: ' + escapeHtml(err.message) + '</p>';
+    }
+  }
+
+  document.getElementById('createForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const btn = document.getElementById('createBtn');
+    const form = e.target;
+    btn.disabled = true;
+    btn.textContent = 'Creating...';
+
+    const body = {
+      company_name: form.company_name.value.trim(),
+      phone: form.phone.value.trim() || null,
+      email: form.email.value.trim() || null,
+      address: form.address.value.trim() || null,
+    };
+
+    try {
+      await apiFetch('/clients', { method: 'POST', body });
+      toast('Client created', 'success');
+      form.reset();
+      load();
+    } catch (err) {
+      toast('Failed: ' + err.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Create Client';
+    }
+  });
+
+  load();
+})();
+</script>
+</body>
+</html>

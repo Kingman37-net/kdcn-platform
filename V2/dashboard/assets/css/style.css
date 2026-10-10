@@ -1,0 +1,306 @@
+/* ============================================================
+   KDCN Platform V2 — Dashboard Theme
+   Dark + cyan, matches KDCN-Digital-Platform
+   ============================================================ */
+
+:root {
+  --accent: #00d1ff;
+  --accent-dim: #0099cc;
+  --bg-primary: #0a0f14;
+  --bg-secondary: #0d1520;
+  --card-bg: #0d1520;
+  --card-border: #1a2433;
+  --text-primary: #ffffff;
+  --text-muted: #8a9bb0;
+  --danger: #ff6b6b;
+  --success: #00ffcc;
+  --warning: #ffc107;
+  --radius: 10px;
+}
+
+body.light {
+  --bg-primary: #f5f7fa;
+  --bg-secondary: #ffffff;
+  --card-bg: #ffffff;
+  --card-border: #d8e0e8;
+  --text-primary: #111;
+  --text-muted: #556;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: "Segoe UI", Tahoma, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+  min-height: 100vh;
+  transition: background 0.3s, color 0.3s;
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { color: var(--accent-dim); }
+
+/* ==================== NAV ==================== */
+nav {
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--card-border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.nav-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.logo img { height: 40px; }
+.nav-menu {
+  list-style: none;
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+.nav-menu a {
+  color: var(--text-primary);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: background 0.25s, color 0.25s;
+}
+.nav-menu a:hover,
+.nav-menu a.active {
+  background: var(--accent);
+  color: #0a0f14;
+}
+.theme-toggle {
+  background: transparent;
+  border: 1px solid var(--card-border);
+  color: var(--text-primary);
+  padding: 6px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+.hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+}
+.hamburger .bar {
+  width: 22px;
+  height: 2px;
+  background: var(--text-primary);
+  border-radius: 2px;
+}
+@media (max-width: 768px) {
+  .hamburger { display: flex; }
+  .nav-menu {
+    position: absolute;
+    top: 100%; left: 0; right: 0;
+    background: var(--bg-secondary);
+    flex-direction: column;
+    padding: 12px;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s;
+    border-bottom: 1px solid var(--card-border);
+  }
+  .nav-menu.active { max-height: 500px; }
+}
+
+/* ==================== HERO ==================== */
+.hero {
+  background: linear-gradient(135deg, var(--bg-secondary), var(--bg-primary));
+  padding: 50px 20px;
+  text-align: center;
+  border-bottom: 1px solid var(--card-border);
+}
+.hero .powered-by {
+  font-size: 0.9rem;
+  color: var(--accent);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.hero h1 { font-size: 2.4rem; margin-bottom: 10px; }
+.hero h1 span { color: var(--accent); }
+.hero p { color: var(--text-muted); font-size: 1.05rem; max-width: 640px; margin: 0 auto; }
+
+/* ==================== LAYOUT ==================== */
+section {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+.section-title {
+  color: var(--accent);
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+}
+
+/* ==================== CARD ==================== */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-bottom: 20px;
+}
+.card h2, .card h3 {
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+
+/* ==================== FORMS ==================== */
+.form-group { margin-bottom: 14px; }
+label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: var(--text-primary);
+}
+input[type=text], input[type=email], input[type=password], input[type=number], textarea, select {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--bg-primary);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-family: inherit;
+}
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(0, 209, 255, 0.15);
+}
+textarea { resize: vertical; min-height: 80px; }
+
+/* ==================== BUTTONS ==================== */
+.btn {
+  display: inline-block;
+  padding: 10px 22px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: background 0.25s, transform 0.15s;
+}
+.btn-primary {
+  background: var(--accent);
+  color: #0a0f14;
+}
+.btn-primary:hover { background: var(--accent-dim); transform: translateY(-1px); }
+.btn-secondary {
+  background: transparent;
+  border: 1px solid var(--card-border);
+  color: var(--text-primary);
+}
+.btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+.btn-danger {
+  background: var(--danger);
+  color: #fff;
+}
+.btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+
+/* ==================== LOGIN ==================== */
+.login-wrap {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.login-box {
+  width: 100%;
+  max-width: 400px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+  padding: 34px 28px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+.login-box h1 {
+  color: var(--accent);
+  font-size: 1.5rem;
+  margin-bottom: 4px;
+  text-align: center;
+}
+.login-box .sub {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin-bottom: 22px;
+}
+
+/* ==================== TOASTS ==================== */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #111;
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  z-index: 9999;
+  max-width: 90vw;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  display: none;
+}
+.toast.show { display: block; }
+.toast.success { background: #046b4a; }
+.toast.error { background: #7c1414; }
+
+/* ==================== TABLES ==================== */
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+th, td {
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--card-border);
+  font-size: 0.9rem;
+}
+th {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+tr:hover { background: rgba(255,255,255,0.02); }
+
+/* ==================== BADGES ==================== */
+.badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.badge.active { background: rgba(0,255,204,0.15); color: var(--success); border: 1px solid var(--success); }
+.badge.pending { background: rgba(255,193,7,0.15); color: var(--warning); border: 1px solid var(--warning); }
+.badge.completed { background: rgba(0,209,255,0.15); color: var(--accent); border: 1px solid var(--accent); }
+.badge.cancelled { background: rgba(255,107,107,0.15); color: var(--danger); border: 1px solid var(--danger); }
+
+/* ==================== GRID ==================== */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+@media (max-width: 768px) {
+  .grid-2 { grid-template-columns: 1fr; }
+}
