@@ -1,0 +1,41 @@
+name: Import D1 Schema
+
+on:
+  workflow_dispatch:
+    inputs:
+      schema_file:
+        description: 'Path to SQL file to execute'
+        required: true
+        default: 'V2/database/schema/0001_init.sql'
+      mode:
+        description: 'remote or local'
+        required: true
+        default: 'remote'
+
+permissions:
+  contents: read
+
+jobs:
+  import:
+    name: Execute SQL against D1
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install worker dependencies
+        working-directory: V2/workers
+        run: npm install
+
+      - name: Execute SQL against D1
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: V2/workers
+          command: d1 execute kdcn-platform --${{ github.event.inputs.mode }} --file=../${{ github.event.inputs.schema_file }}

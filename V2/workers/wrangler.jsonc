@@ -5,5 +5,12 @@
   "compatibility_date": "2026-10-01",
   "observability": {
     "enabled": true
-  }
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "kdcn-platform",
+      "database_id": "089c592f-5089-43b1-bc2b-126c2d604500"
+    }
+  ]
 }
