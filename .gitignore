@@ -1,2 +1,36 @@
+# ============================================================
+# KDCN Platform — Repository Ignore Rules
+# ============================================================
+
+# Node (V2)
+node_modules/
+npm-debug.log*
+
+# Secrets (both V1 and V2)
+.env
+!.env.example
+
+# Python / Django (V1 — future changes)
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+.venv/
+venv/
+env/
+
+# V2 local database
+V2/api/*.db
+V2/*.db
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# Backups
+*.bak
+*.orig
