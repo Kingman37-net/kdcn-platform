@@ -1,5 +1,5 @@
 // KDCN Platform V2 — minimal HTTP server (stdlib)
-// Full routing/auth added in Session 2.
+// Includes JSON body parsing for POST/PATCH/PUT.
 
 import http from 'node:http';
 import crypto from 'node:crypto';
@@ -31,6 +31,47 @@ function match(method, pathname) {
   return null;
 }
 
+// ---------- Body parsing ----------
+
+async function parseBody(req) {
+  if (req.method !== 'POST' && req.method !== 'PATCH' && req.method !== 'PUT') {
+    return null;
+  }
+
+  const chunks = [];
+  let size = 0;
+  const MAX_SIZE = 5 * 1024 * 1024; // 5 MB hard cap
+
+  const raw = await new Promise((resolve, reject) => {
+    req.on('data', (chunk) => {
+      size += chunk.length;
+      if (size > MAX_SIZE) {
+        reject(new Error('Request body too large'));
+        req.destroy();
+        return;
+      }
+      chunks.push(chunk);
+    });
+    req.on('end', () => resolve(Buffer.concat(chunks).toString('utf-8')));
+    req.on('error', reject);
+  });
+
+  if (!raw) return null;
+
+  const ctype = (req.headers['content-type'] || '').toLowerCase();
+  if (ctype.includes('application/json')) {
+    try {
+      return JSON.parse(raw);
+    } catch (e) {
+      const err = new Error(`Invalid JSON: ${e.message}`);
+      err.code = 'VALIDATION_FAILED';
+      err.statusCode = 400;
+      throw err;
+    }
+  }
+  return raw;
+}
+
 function sendJson(res, status, body, requestId) {
   const payload = JSON.stringify(body, (_k, v) => typeof v === 'bigint' ? Number(v) : v);
   res.writeHead(status, {
@@ -56,13 +97,40 @@ export function startServer() {
       return;
     }
 
+    // ---------- Parse body ----------
+    let body = null;
     try {
-      const ctx = { req, url, requestId, params: m.params, query: Object.fromEntries(url.searchParams) };
+      body = await parseBody(req);
+    } catch (err) {
+      const status = err.statusCode || 400;
+      const code = err.code || 'VALIDATION_FAILED';
+      sendJson(res, status, errorEnvelope(code, err.message, requestId), requestId);
+      return;
+    }
+
+    try {
+      const ctx = {
+        req,
+        url,
+        requestId,
+        params: m.params,
+        body,
+        query: Object.fromEntries(url.searchParams),
+      };
+
       const result = await m.handler(ctx);
       const [status, payload] = Array.isArray(result) ? result : [200, result];
-      if (payload === null || payload === undefined) { sendJson(res, status, {}, requestId); return; }
-      const body = (typeof payload === 'object' && 'ok' in payload) ? payload : successEnvelope(payload);
-      sendJson(res, status, body, requestId);
+
+      if (payload === null || payload === undefined) {
+        sendJson(res, status, {}, requestId);
+        return;
+      }
+
+      const wrapped = (typeof payload === 'object' && 'ok' in payload)
+        ? payload
+        : successEnvelope(payload);
+
+      sendJson(res, status, wrapped, requestId);
     } catch (err) {
       const status = err.statusCode || 500;
       const code = err.code || 'INTERNAL_ERROR';
