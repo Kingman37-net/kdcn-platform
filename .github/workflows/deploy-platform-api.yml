@@ -1,0 +1,38 @@
+name: Deploy Platform API
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'V2/workers/**'
+      - '.github/workflows/deploy-platform-api.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  deployments: write
+
+jobs:
+  deploy:
+    name: Deploy kdcn-platform-api to Cloudflare
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install worker dependencies
+        working-directory: V2/workers
+        run: npm install
+
+      - name: Deploy Worker to Cloudflare
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: V2/workers
+          command: deploy
