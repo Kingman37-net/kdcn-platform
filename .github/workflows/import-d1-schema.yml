@@ -38,4 +38,4 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: V2/workers
-          command: d1 execute kdcn-platform --${{ github.event.inputs.mode }} --file=../${{ github.event.inputs.schema_file }}
+          command: d1 execute kdcn-platform --remote --file=../database/schema/0001_init.sql
