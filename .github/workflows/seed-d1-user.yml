@@ -1,0 +1,37 @@
+name: Seed D1 Dev User
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  seed:
+    name: Seed dev user into D1
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install worker dependencies
+        working-directory: V2/workers
+        run: npm install
+
+      - name: Seed user
+        working-directory: V2/workers
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          echo "▶ SQL file:"
+          cat ../database/seeds/0001_dev_user.sql
+          echo ""
+          echo "▶ Running seed..."
+          npx --yes wrangler@latest d1 execute kdcn-platform --remote --file=../database/seeds/0001_dev_user.sql
