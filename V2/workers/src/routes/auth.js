@@ -36,16 +36,19 @@ export async function login(ctx) {
   if (user.is_locked) throw new ApiError('PERMISSION_DENIED', 'Account is locked.', 403);
   if (!user.is_active) throw new ApiError('PERMISSION_DENIED', 'Account is disabled.', 403);
 
-  const ok = await verifyPassword(password, user.password_hash);
-  if (!ok) {
-    const fails = (user.failed_login_count || 0) + 1;
-    const lock = fails >= MAX_FAILED ? 1 : 0;
-    await run(ctx.db,
-      `UPDATE users SET failed_login_count = ?, is_locked = ?, updated_at = ? WHERE id = ?`,
-      fails, lock, nowISO(), user.id
-    );
-    throw new ApiError('UNAUTHENTICATED', 'Invalid email or password.', 401);
+const result = await verifyPassword(password, user.password_hash);
+if (!result.ok) {
+  if (result.reason === 'crypto_error') {
+    throw new ApiError('INTERNAL_ERROR', `Crypto failed: ${result.error}`, 500);
   }
+  const fails = (user.failed_login_count || 0) + 1;
+  const lock = fails >= MAX_FAILED ? 1 : 0;
+  await run(ctx.db,
+    `UPDATE users SET failed_login_count = ?, is_locked = ?, updated_at = ? WHERE id = ?`,
+    fails, lock, nowISO(), user.id
+  );
+  throw new ApiError('UNAUTHENTICATED', 'Invalid email or password.', 401);
+}
 
   await run(ctx.db,
     `UPDATE users SET failed_login_count = 0, last_login_at = ?, updated_at = ? WHERE id = ?`,

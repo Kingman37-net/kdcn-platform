@@ -1,6 +1,6 @@
 // KDCN Platform V2 — security helpers (Web Crypto, Workers-compatible)
 
-const PBKDF2_ITERATIONS = 600000;
+const PBKDF2_ITERATIONS = 10000;
 const PBKDF2_KEYLEN = 32;
 
 function b64url(input) {
@@ -37,13 +37,15 @@ export async function hashPassword(password) {
 }
 
 export async function verifyPassword(password, stored) {
-  try {
-    const parts = stored.split('$');
-    if (parts.length !== 4 || parts[0] !== 'pbkdf2') return false;
-    const iterations = Number(parts[1]);
-    const salt = b64urlDecode(parts[2]);
-    const expected = b64urlDecode(parts[3]);
+  const parts = stored.split('$');
+  if (parts.length !== 4 || parts[0] !== 'pbkdf2') {
+    return { ok: false, reason: 'malformed_stored_hash' };
+  }
+  const iterations = Number(parts[1]);
+  const salt = b64urlDecode(parts[2]);
+  const expected = b64urlDecode(parts[3]);
 
+  try {
     const keyMaterial = await crypto.subtle.importKey(
       'raw',
       new TextEncoder().encode(password),
@@ -57,15 +59,15 @@ export async function verifyPassword(password, stored) {
       expected.length * 8
     );
     const actual = new Uint8Array(bits);
-
-    if (actual.length !== expected.length) return false;
-    // Constant-time compare
+    if (actual.length !== expected.length) {
+      return { ok: false, reason: 'length_mismatch' };
+    }
     let diff = 0;
     for (let i = 0; i < actual.length; i++) diff |= actual[i] ^ expected[i];
-    return diff === 0;
-  } catch {
-    return false;
-  }
+    return diff === 0 ? { ok: true } : { ok: false, reason: 'hash_mismatch' };
+  } catch (e) {
+    return { ok: false, reason: 'crypto_error', error: e.message || String(e) };
+   }
 }
 
 async function hmacKey(secret) {
