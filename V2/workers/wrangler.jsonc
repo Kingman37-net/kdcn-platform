@@ -11,7 +11,7 @@
     "binding": "ASSETS"
   },
   "vars": {
-    "ENVIRONMENT": "staging",
+    "ENVIRONMENT": "production",
     "JWT_ISSUER": "admin.kingmandigital.co.ke",
     "JWT_AUDIENCE": "kdcn-platform-api",
     "ACCESS_TOKEN_TTL_SECONDS": "900",
