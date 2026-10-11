@@ -1,8 +1,12 @@
 // KDCN Platform V2 — Cloudflare Worker entrypoint
 
-import { ApiError, errorEnvelope, successEnvelope } from './lib/errors.js';
+import { errorEnvelope, successEnvelope } from './lib/errors.js';
 import { getDB } from './lib/db.js';
 import { login, refresh, logout, me } from './routes/auth.js';
+import { listClients, getClient, createClient, updateClient } from './routes/clients.js';
+import { listProjects, getProject, createProject, updateProject } from './routes/projects.js';
+import { listServices, getService, createService, updateService } from './routes/services.js';
+import { getDashboard } from './routes/dashboard.js';
 
 const routes = [];
 
@@ -35,7 +39,7 @@ route('GET', '/health', async (ctx) => ({
     service: 'kdcn-platform-api',
     runtime: 'cloudflare-workers',
     environment: ctx.env.ENVIRONMENT || 'production',
-    phase: '5c',
+    phase: '5d',
     timestamp: new Date().toISOString(),
   },
 }));
@@ -46,13 +50,41 @@ route('POST', '/auth/refresh', refresh);
 route('POST', '/auth/logout', logout);
 route('GET', '/auth/me', me);
 
+// ---------- Clients ----------
+route('GET', '/clients', listClients);
+route('GET', '/clients/{id}', getClient);
+route('POST', '/clients', createClient);
+route('PATCH', '/clients/{id}', updateClient);
+
+// ---------- Projects ----------
+route('GET', '/projects', listProjects);
+route('GET', '/projects/{id}', getProject);
+route('POST', '/projects', createProject);
+route('PATCH', '/projects/{id}', updateProject);
+
+// ---------- Services ----------
+route('GET', '/services', listServices);
+route('GET', '/services/{id}', getService);
+route('POST', '/services', createService);
+route('PATCH', '/services/{id}', updateService);
+
+// ---------- Dashboard ----------
+route('GET', '/dashboard', getDashboard);
+
 // ---------- Root ----------
 route('GET', '/', async () => ({
   ok: true,
   data: {
     service: 'KDCN Platform API',
-    phase: '5c',
-    endpoints: ['/health', '/auth/login', '/auth/refresh', '/auth/logout', '/auth/me'],
+    phase: '5d',
+    endpoints: [
+      '/health',
+      '/auth/login', '/auth/refresh', '/auth/logout', '/auth/me',
+      '/clients', '/clients/{id}',
+      '/projects', '/projects/{id}',
+      '/services', '/services/{id}',
+      '/dashboard',
+    ],
   },
 }));
 
@@ -91,10 +123,10 @@ export default {
     const requestId = request.headers.get('X-Request-Id')
       || `req_${crypto.randomUUID().slice(0, 24)}`;
 
-    // CORS preflight
     const origin = request.headers.get('Origin') || '';
     const corsOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : null;
 
+    // CORS preflight
     if (request.method === 'OPTIONS') {
       return new Response(null, {
         status: 204,
@@ -115,7 +147,10 @@ export default {
     // Match route
     const m = match(request.method, url.pathname);
     if (!m) {
-      return sendJson(errorEnvelope('NOT_FOUND', `No route for ${request.method} ${url.pathname}`, requestId), 404, requestId, corsOrigin);
+      return sendJson(
+        errorEnvelope('NOT_FOUND', `No route for ${request.method} ${url.pathname}`, requestId),
+        404, requestId, corsOrigin
+      );
     }
 
     // Parse body
@@ -128,7 +163,10 @@ export default {
           if (raw) body = JSON.parse(raw);
         }
       } catch (e) {
-        return sendJson(errorEnvelope('VALIDATION_FAILED', `Invalid JSON: ${e.message}`, requestId), 400, requestId, corsOrigin);
+        return sendJson(
+          errorEnvelope('VALIDATION_FAILED', `Invalid JSON: ${e.message}`, requestId),
+          400, requestId, corsOrigin
+        );
       }
     }
 
