@@ -6,6 +6,13 @@
   "observability": {
     "enabled": true
   },
+  "vars": {
+    "ENVIRONMENT": "production",
+    "JWT_ISSUER": "admin.kingmandigital.co.ke",
+    "JWT_AUDIENCE": "kdcn-platform-api",
+    "ACCESS_TOKEN_TTL_SECONDS": "900",
+    "REFRESH_TOKEN_TTL_DAYS": "7"
+  },
   "d1_databases": [
     {
       "binding": "DB",
