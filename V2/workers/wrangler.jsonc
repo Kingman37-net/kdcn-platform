@@ -7,7 +7,7 @@
     "enabled": true
   },
   "vars": {
-    "ENVIRONMENT": "production",
+    "ENVIRONMENT": "staging",
     "JWT_ISSUER": "admin.kingmandigital.co.ke",
     "JWT_AUDIENCE": "kdcn-platform-api",
     "ACCESS_TOKEN_TTL_SECONDS": "900",
