@@ -6,7 +6,7 @@ on:
       schema_file:
         description: 'Path to SQL file (relative to V2/)'
         required: true
-        default: 'database/schema/0001_init.sql'
+        default: 'V2/database/schema/0001_init.sql'
       mode:
         description: 'remote or local'
         required: true
@@ -33,9 +33,23 @@ jobs:
         run: npm install
 
       - name: Execute SQL against D1
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          workingDirectory: V2/workers
-          command: d1 execute kdcn-platform --remote --file=../database/schema/0001_init.sql
+        shell: bash
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          SCHEMA_FILE: ${{ github.event.inputs.schema_file }}
+          MODE: ${{ github.event.inputs.mode }}
+        run: |
+          set -euo pipefail
+          echo "▶ Working directory: $(pwd)"
+          echo "▶ Schema file:       $SCHEMA_FILE"
+          echo "▶ Mode:              $MODE"
+          echo "▶ Checking files..."
+          ls -la "$SCHEMA_FILE"
+          echo ""
+          cd V2/workers
+          echo "▶ From worker dir: $(pwd)"
+          ls -la wrangler.jsonc
+          echo ""
+          echo "▶ Running wrangler d1 execute..."
+          npx --yes wrangler@latest d1 execute kdcn-platform --$MODE --file=../${SCHEMA_FILE#V2/}
