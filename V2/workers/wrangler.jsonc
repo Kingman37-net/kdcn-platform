@@ -23,5 +23,11 @@
       "database_name": "kdcn-platform",
       "database_id": "089c592f-5089-43b1-bc2b-126c2d604500"
     }
+  ],
+  "routes": [
+    {
+      "pattern": "admin.kingmandigital.co.ke",
+      "custom_domain": true
+    }
   ]
 }
