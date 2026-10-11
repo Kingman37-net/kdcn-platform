@@ -6,6 +6,10 @@
   "observability": {
     "enabled": true
   },
+  "assets": {
+    "directory": "../dashboard",
+    "binding": "ASSETS"
+  },
   "vars": {
     "ENVIRONMENT": "staging",
     "JWT_ISSUER": "admin.kingmandigital.co.ke",

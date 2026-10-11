@@ -112,6 +112,7 @@ function sendJson(body, status, requestId, corsOrigin) {
 
 const ALLOWED_ORIGINS = [
   'https://admin.kingmandigital.co.ke',
+  'https://kdcn-platform-api.kingmandigitalcybernetwork.workers.dev',
   'https://platform.kingmandigital.co.ke',
   'http://localhost:8080',
   'http://127.0.0.1:8080',
