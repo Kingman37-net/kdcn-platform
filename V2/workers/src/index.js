@@ -144,6 +144,13 @@ export default {
       });
     }
 
+// ---------- Root rewrite: serve /index.html for / ----------
+if (url.pathname === '/' && request.method === 'GET') {
+  const indexUrl = new URL('/index.html', url);
+  const indexRequest = new Request(indexUrl.toString(), request);
+  return env.ASSETS.fetch(indexRequest);
+}
+
     // ---------- Match API route ----------
     const m = match(request.method, url.pathname);
 
