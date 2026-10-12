@@ -145,15 +145,23 @@ export default {
       });
     }
 
-    // Match route
-    const m = match(request.method, url.pathname);
-    if (!m) {
-      return sendJson(
-        errorEnvelope('NOT_FOUND', `No route for ${request.method} ${url.pathname}`, requestId),
-        404, requestId, corsOrigin
-      );
+// Match route
+const m = match(request.method, url.pathname);
+if (!m) {
+  // No API route — try serving static asset
+  try {
+    const assetResponse = await env.ASSETS.fetch(request);
+    if (assetResponse.status !== 404) {
+      return assetResponse;
     }
-
+  } catch (e) {
+    // fall through to JSON 404
+  }
+  return sendJson(
+    errorEnvelope('NOT_FOUND', `No route for ${request.method} ${url.pathname}`, requestId),
+    404, requestId, corsOrigin
+  );
+}
     // Parse body
     let body = null;
     if (['POST', 'PATCH', 'PUT'].includes(request.method)) {
