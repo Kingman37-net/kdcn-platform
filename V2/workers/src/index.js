@@ -8,6 +8,7 @@ import { listProjects, getProject, createProject, updateProject } from './routes
 import { listServices, getService, createService, updateService } from './routes/services.js';
 import { getDashboard } from './routes/dashboard.js';
 
+// ---------- Router ----------
 const routes = [];
 
 function route(method, pattern, handler) {
@@ -16,7 +17,12 @@ function route(method, pattern, handler) {
     paramNames.push(n);
     return '([^/]+)';
   });
-  routes.push({ method, regex: new RegExp(`^${regexPath}$`), paramNames, handler });
+  routes.push({
+    method,
+    regex: new RegExp(`^${regexPath}$`),
+    paramNames,
+    handler,
+  });
 }
 
 function match(method, path) {
@@ -25,7 +31,9 @@ function match(method, path) {
     const m = path.match(r.regex);
     if (!m) continue;
     const params = {};
-    r.paramNames.forEach((name, i) => { params[name] = decodeURIComponent(m[i + 1]); });
+    r.paramNames.forEach((name, i) => {
+      params[name] = decodeURIComponent(m[i + 1]);
+    });
     return { handler: r.handler, params };
   }
   return null;
@@ -71,24 +79,11 @@ route('PATCH', '/services/{id}', updateService);
 // ---------- Dashboard ----------
 route('GET', '/dashboard', getDashboard);
 
-// ---------- Root ----------
-route('GET', '/', async () => ({
-  ok: true,
-  data: {
-    service: 'KDCN Platform API',
-    phase: '5d',
-    endpoints: [
-      '/health',
-      '/auth/login', '/auth/refresh', '/auth/logout', '/auth/me',
-      '/clients', '/clients/{id}',
-      '/projects', '/projects/{id}',
-      '/services', '/services/{id}',
-      '/dashboard',
-    ],
-  },
-}));
+// NOTE: No root `/` route here on purpose.
+// `/` and every other unmatched path falls through to env.ASSETS
+// so the dashboard's index.html is served.
 
-// ---------- Response helpers ----------
+// ---------- Response helper ----------
 function sendJson(body, status, requestId, corsOrigin) {
   const headers = {
     'Content-Type': 'application/json; charset=utf-8',
@@ -99,6 +94,7 @@ function sendJson(body, status, requestId, corsOrigin) {
     'X-Content-Type-Options': 'nosniff',
     'Referrer-Policy': 'strict-origin-when-cross-origin',
   };
+
   if (corsOrigin) {
     headers['Access-Control-Allow-Origin'] = corsOrigin;
     headers['Access-Control-Allow-Credentials'] = 'true';
@@ -107,9 +103,11 @@ function sendJson(body, status, requestId, corsOrigin) {
     headers['Access-Control-Expose-Headers'] = 'X-Request-Id';
     headers['Vary'] = 'Origin';
   }
+
   return new Response(JSON.stringify(body, null, 2), { status, headers });
 }
 
+// ---------- Allowed CORS origins ----------
 const ALLOWED_ORIGINS = [
   'https://admin.kingmandigital.co.ke',
   'https://kdcn-platform-api.kingmandigitalcybernetwork.workers.dev',
@@ -118,51 +116,60 @@ const ALLOWED_ORIGINS = [
   'http://127.0.0.1:8080',
 ];
 
+// ---------- Worker entrypoint ----------
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    const requestId = request.headers.get('X-Request-Id')
-      || `req_${crypto.randomUUID().slice(0, 24)}`;
+    const requestId =
+      request.headers.get('X-Request-Id') ||
+      `req_${crypto.randomUUID().slice(0, 24)}`;
 
     const origin = request.headers.get('Origin') || '';
     const corsOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : null;
 
-    // CORS preflight
+    // ---------- CORS preflight ----------
     if (request.method === 'OPTIONS') {
+      const corsHeaders = {};
+      if (corsOrigin) {
+        corsHeaders['Access-Control-Allow-Origin'] = corsOrigin;
+        corsHeaders['Access-Control-Allow-Credentials'] = 'true';
+        corsHeaders['Access-Control-Allow-Methods'] = 'GET, POST, PATCH, PUT, DELETE, OPTIONS';
+        corsHeaders['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, X-Request-Id';
+        corsHeaders['Access-Control-Expose-Headers'] = 'X-Request-Id';
+        corsHeaders['Vary'] = 'Origin';
+      }
       return new Response(null, {
         status: 204,
-        headers: {
-          'X-Request-Id': requestId,
-          ...(corsOrigin ? {
-            'Access-Control-Allow-Origin': corsOrigin,
-            'Access-Control-Allow-Credentials': 'true',
-            'Access-Control-Allow-Methods': 'GET, POST, PATCH, PUT, DELETE, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Request-Id',
-            'Access-Control-Expose-Headers': 'X-Request-Id',
-            'Vary': 'Origin',
-          } : {}),
-        },
+        headers: { 'X-Request-Id': requestId, ...corsHeaders },
       });
     }
 
-// Match route
-const m = match(request.method, url.pathname);
-if (!m) {
-  // No API route — try serving static asset
-  try {
-    const assetResponse = await env.ASSETS.fetch(request);
-    if (assetResponse.status !== 404) {
-      return assetResponse;
+    // ---------- Match API route ----------
+    const m = match(request.method, url.pathname);
+
+    // No API route -> try static assets, then JSON 404
+    if (!m) {
+      try {
+        const assetResponse = await env.ASSETS.fetch(request);
+        if (assetResponse.status !== 404) {
+          return assetResponse;
+        }
+      } catch (e) {
+        // ignore and fall through
+      }
+      return sendJson(
+        errorEnvelope(
+          'NOT_FOUND',
+          `No route for ${request.method} ${url.pathname}`,
+          requestId
+        ),
+        404,
+        requestId,
+        corsOrigin
+      );
     }
-  } catch (e) {
-    // fall through to JSON 404
-  }
-  return sendJson(
-    errorEnvelope('NOT_FOUND', `No route for ${request.method} ${url.pathname}`, requestId),
-    404, requestId, corsOrigin
-  );
-}
-    // Parse body
+
+    // ---------- Parse body for POST/PATCH/PUT ----------
     let body = null;
     if (['POST', 'PATCH', 'PUT'].includes(request.method)) {
       try {
@@ -174,11 +181,14 @@ if (!m) {
       } catch (e) {
         return sendJson(
           errorEnvelope('VALIDATION_FAILED', `Invalid JSON: ${e.message}`, requestId),
-          400, requestId, corsOrigin
+          400,
+          requestId,
+          corsOrigin
         );
       }
     }
 
+    // ---------- Run handler ----------
     try {
       const ctx = {
         req: request,
@@ -198,15 +208,19 @@ if (!m) {
         return sendJson({}, status, requestId, corsOrigin);
       }
 
-      const wrapped = (typeof payload === 'object' && 'ok' in payload)
-        ? payload
-        : successEnvelope(payload);
+      const wrapped =
+        typeof payload === 'object' && 'ok' in payload
+          ? payload
+          : successEnvelope(payload);
 
       return sendJson(wrapped, status, requestId, corsOrigin);
     } catch (err) {
       const status = err.statusCode || 500;
       const code = err.code || 'INTERNAL_ERROR';
-      const msg = env.ENVIRONMENT === 'production' ? 'Something went wrong.' : err.message;
+      const msg =
+        env.ENVIRONMENT === 'production'
+          ? 'Something went wrong.'
+          : err.message;
       return sendJson(errorEnvelope(code, msg, requestId), status, requestId, corsOrigin);
     }
   },
